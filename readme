@@ -1,0 +1,4 @@
+1: install docker and ensure it is running (Eg: Docker for Windows)
+2: install mvn and add to path
+3: mvn compile
+4: mvn spring-boot:run

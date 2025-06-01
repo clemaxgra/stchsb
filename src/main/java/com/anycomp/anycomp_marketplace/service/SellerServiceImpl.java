@@ -1,0 +1,76 @@
+package com.anycomp.anycomp_marketplace.service;
+
+import com.anycomp.anycomp_marketplace.model.Seller;
+import com.anycomp.anycomp_marketplace.repository.SellerRepository;
+
+import jakarta.persistence.EntityNotFoundException;
+
+import org.springframework.stereotype.Service;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+import java.util.Optional;
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class SellerServiceImpl implements SellerService{
+    private final SellerRepository sellerRepository;
+
+    public List<Seller> getAllSellers(){
+        return sellerRepository.findAll();
+    }
+
+    public Seller getSellerByID(Long id){
+        Optional<Seller> optionalSeller = sellerRepository.findById(id);
+        if(optionalSeller.isPresent())
+            return optionalSeller.get();
+        log.info("Seller with id: {} doesn't exist", id);
+        return null;
+    }
+    
+    public Seller saveSeller(Seller seller){
+
+        if((seller.getId() != null) && sellerRepository.findById(seller.getId()).isPresent()){
+            log.info("Seller with id: {} already exists", seller.getId());
+            return null;
+        }
+        else{
+            Seller savedSeller = sellerRepository.save(seller);
+            log.info("Seller with id: {} saved successfully", savedSeller.getId());
+            return savedSeller;
+        }
+    }
+
+    public Seller updateSeller(Seller seller){
+
+        Long targetID = seller.getId();
+        Optional<Seller> optionalSeller = sellerRepository.findById(targetID);
+    
+        if (optionalSeller.isEmpty()) {
+            throw new EntityNotFoundException("Seller with ID " + targetID + " not found");
+        }
+
+        Seller existingSeller = optionalSeller.get();
+
+        existingSeller.setName(seller.getName());
+        existingSeller.setEmail(seller.getEmail());
+
+        Seller updatedSeller = sellerRepository.save(existingSeller);
+
+        log.info("Seller with id: {} updated successfully", targetID);
+        return updatedSeller;
+
+    }
+    
+    public boolean deleteSellerByID(Long id){
+        if(!sellerRepository.findById(id).isPresent()){
+            log.info("Seller with id: {} doesn't exist", id);
+            return false;
+        }
+        sellerRepository.deleteById(id);
+        log.info("Seller with id: {} deleted successfully", id);
+        return true;
+    }
+}
