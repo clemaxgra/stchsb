@@ -1,5 +1,6 @@
 package com.anycomp.anycomp_marketplace.controller;
 
+import com.anycomp.anycomp_marketplace.dto.ItemDTO;
 import com.anycomp.anycomp_marketplace.model.Item;
 import com.anycomp.anycomp_marketplace.model.Seller;
 import com.anycomp.anycomp_marketplace.service.ItemService;
@@ -9,6 +10,7 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ValidatorFactory;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
@@ -60,30 +62,17 @@ public class ItemController {
 
     @PostMapping("/sellers/{sellerId}/items")
     //public ResponseEntity<?> saveItem(@PathVariable Long sellerId, @RequestBody @Validated Item item, BindingResult bindingResult) {
-    public ResponseEntity<?> saveItem(@PathVariable Long sellerId, @RequestBody Item item) {
-        //log.info("Seller id is {}", sellerId);
-        Seller seller = sellerService.getSellerByID(sellerId);
+    public ResponseEntity<?> saveItem(@PathVariable Long sellerId, @RequestBody @Valid ItemDTO itemDTO, BindingResult bindingResult) {
+        itemDTO.setSellerId(sellerId);
 
-        if (seller == null) {
-            return ResponseEntity.badRequest().body("Invalid seller ID");
-        }
-
-        item.setSeller(seller);
-
-        ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
-        Validator validator = factory.getValidator();
-        Set<ConstraintViolation<Item>> violations = validator.validate(item);
-
-        if (!violations.isEmpty()) {
+        if(bindingResult.hasErrors()){
             StringBuilder errors = new StringBuilder();
-            for (ConstraintViolation<Item> violation : violations) {
-                errors.append(violation.getMessage()).append("\n");
-            }
-            return ResponseEntity.badRequest().body(errors.toString());
+            bindingResult.getAllErrors().forEach(error -> errors.append(error.getDefaultMessage()).append("\n"));
+            return ResponseEntity.badRequest().body(errors.toString());            
         }
         
         try {
-            Item savedItem = itemService.saveItem(item, sellerId);
+            Item savedItem = itemService.saveItem(itemDTO);
             return new ResponseEntity<>(savedItem,(savedItem == null)?HttpStatus.CONFLICT:HttpStatus.CREATED);
         } catch (Exception ex){
             return ResponseEntity.status(HttpStatus.CONFLICT)
@@ -93,11 +82,17 @@ public class ItemController {
     }   
 
     @PutMapping("/items/{id}")
-    public ResponseEntity<?> saveItem(@RequestBody Item item, @PathVariable Long id) {
-        item.setId(id);
+    public ResponseEntity<?> updateItem(@PathVariable Long id, @RequestBody @Valid ItemDTO itemDTO, BindingResult bindingResult) {
+        itemDTO.setId(id);
+
+        if(bindingResult.hasErrors()){
+            StringBuilder errors = new StringBuilder();
+            bindingResult.getAllErrors().forEach(error -> errors.append(error.getDefaultMessage()).append("\n"));
+            return ResponseEntity.badRequest().body(errors.toString());            
+        }
 
         try{
-            Item updatedItem = itemService.updateItem(item); //in existing implementation it should not return null
+            Item updatedItem = itemService.updateItem(itemDTO); //in existing implementation it should not return null
 
             return new ResponseEntity<>(updatedItem,(updatedItem == null)?HttpStatus.CONFLICT:HttpStatus.OK);
         } catch (Exception ex){

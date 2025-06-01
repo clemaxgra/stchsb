@@ -6,6 +6,8 @@ import com.anycomp.anycomp_marketplace.repository.PurchaseRepository;
 
 
 import com.anycomp.anycomp_marketplace.model.Item;
+import com.anycomp.anycomp_marketplace.dto.PurchaseDTO;
+import com.anycomp.anycomp_marketplace.exception.PurchaseValidationException;
 import com.anycomp.anycomp_marketplace.model.Buyer;
 import com.anycomp.anycomp_marketplace.model.Purchase;
 
@@ -28,35 +30,55 @@ public class PurchaseServiceImpl implements PurchaseService{
     private final PurchaseRepository purchaseRepository;
     
     @Transactional
-    public void purchase(Long buyerID, Long itemID, int quantity) throws Exception{
-        if(quantity <= 0)
-            throw new Exception("Invalid purchase amount");
+    public void purchase(PurchaseDTO purchaseDTO) throws PurchaseValidationException{
+        Purchase purchase = convertToEntity(purchaseDTO);
         
-        Optional<Buyer> optionalBuyer = buyerRepository.findById(buyerID);
-        Optional<Item> optionalItem = itemRepository.findById(buyerID);
+        Integer quantity = purchaseDTO.getQuantity();
 
-        if(!optionalBuyer.isPresent())
-            throw new Exception("Buyer doesn't exist");
-
-        if(!optionalItem.isPresent())
-            throw new Exception("Item doesn't exist");
-
-        Buyer buyer = optionalBuyer.get();
-        Item item = optionalItem.get();
-
+        if(quantity <= 0)
+            throw new PurchaseValidationException("Invalid purchase amount");
+        Item item = purchase.getItem();
         item.setQuantity(item.getQuantity() - quantity);
 
         if(item.getQuantity() < 0)
-            throw new Exception("Not enough item in stock");
+            throw new PurchaseValidationException("Not enough item in stock");
 
-        Purchase purchase = new Purchase();
-        purchase.setBuyer(buyer);
-        purchase.setItem(item);
-        purchase.setQuantity(quantity);
         purchase.setPurchaseDate(new Timestamp(System.currentTimeMillis()));
 
         purchaseRepository.save(purchase);
         itemRepository.save(item);
 
+        log.info("Purchase with id: {} saved successfully", purchase.getId());
     }
+
+
+    public Purchase convertToEntity(PurchaseDTO purchaseDTO)  throws EntityNotFoundException{
+        Purchase purchase = null;
+        if(purchaseDTO.getId() != null){
+            Optional<Purchase> optionalPurchase = purchaseRepository.findById(purchaseDTO.getId());
+            if(optionalPurchase.isPresent())
+                purchase = optionalPurchase.get();
+            else
+                throw new EntityNotFoundException("Purchase doesn't exist");
+        }
+        else{
+            purchase = new Purchase();
+            purchase.setId(purchaseDTO.getId());
+        }
+
+        Optional<Buyer> optionalBuyer = buyerRepository.findById(purchaseDTO.getBuyerId());
+        if(!optionalBuyer.isPresent())
+            throw new EntityNotFoundException("Buyer does not exist");
+        purchase.setBuyer(optionalBuyer.get());
+
+        Optional<Item> optimalItem = itemRepository.findById(purchaseDTO.getItemId());
+        if(!optimalItem.isPresent())
+            throw new EntityNotFoundException("Item does not exist");
+        purchase.setItem(optimalItem.get());
+
+        purchase.setQuantity(purchaseDTO.getQuantity());
+        return purchase;
+    }   
+
+
 }

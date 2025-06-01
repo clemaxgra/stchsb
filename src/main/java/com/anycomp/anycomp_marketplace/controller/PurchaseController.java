@@ -1,9 +1,13 @@
 package com.anycomp.anycomp_marketplace.controller;
 
+import com.anycomp.anycomp_marketplace.dto.ItemDTO;
+import com.anycomp.anycomp_marketplace.dto.PurchaseDTO;
+import com.anycomp.anycomp_marketplace.exception.PurchaseValidationException;
 import com.anycomp.anycomp_marketplace.model.Purchase;
 import com.anycomp.anycomp_marketplace.service.ItemService;
 import com.anycomp.anycomp_marketplace.service.PurchaseService;
 
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
@@ -33,18 +37,24 @@ public class PurchaseController {
 
 
     @PostMapping("/purchase")
-    public ResponseEntity<String> purchase(@RequestBody Map<String, Object> payload) {
-        Long buyerId = Long.valueOf(payload.get("buyerId").toString());
-        Long itemId = Long.valueOf(payload.get("itemId").toString());
-        int quantity = Integer.parseInt(payload.get("quantity").toString());
-
+    public ResponseEntity<String> purchase(@RequestBody @Valid PurchaseDTO purchaseDTO, BindingResult bindingResult) {
+        if(bindingResult.hasErrors()){
+            StringBuilder errors = new StringBuilder();
+            bindingResult.getAllErrors().forEach(error -> errors.append(error.getDefaultMessage()).append("\n"));
+            return ResponseEntity.badRequest().body(errors.toString());            
+        }
         try{
-            purchaseService.purchase(buyerId, itemId, quantity);
-            return ResponseEntity.ok("Success");
-        }catch (Exception ex){
+            purchaseService.purchase(purchaseDTO);
+            return ResponseEntity.ok("Purchase Successful");
+        } catch (PurchaseValidationException ex) {
+            log.info(ex.getMessage());
+            return ResponseEntity.badRequest().body(ex.getMessage());
+        } 
+        
+        /*catch (Exception ex){
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(ex.getMessage());
-        }
+        }*/
 
     }
     

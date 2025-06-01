@@ -1,5 +1,6 @@
 package com.anycomp.anycomp_marketplace.controller;
 
+import com.anycomp.anycomp_marketplace.dto.SellerDTO;
 import com.anycomp.anycomp_marketplace.model.Seller;
 import com.anycomp.anycomp_marketplace.service.SellerService;
 
@@ -44,7 +45,7 @@ public class SellerController {
     }
 
     @PostMapping("")
-    public ResponseEntity<?> saveSeller(@RequestBody @Validated Seller seller, BindingResult bindingResult) {
+    public ResponseEntity<?> saveSeller(@RequestBody @Validated SellerDTO sellerDTO, BindingResult bindingResult) {
 
         if(bindingResult.hasErrors()){
             StringBuilder errors = new StringBuilder();
@@ -53,7 +54,7 @@ public class SellerController {
         }
 
         try {
-            Seller savedSeller = sellerService.saveSeller(seller);
+            Seller savedSeller = sellerService.saveSeller(sellerDTO);
             return new ResponseEntity<>(savedSeller,(savedSeller == null)?HttpStatus.CONFLICT:HttpStatus.CREATED);
         } catch (Exception ex){
             return ResponseEntity.status(HttpStatus.CONFLICT)
@@ -63,8 +64,8 @@ public class SellerController {
     }   
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> saveSeller(@RequestBody @Validated Seller seller, BindingResult bindingResult, @PathVariable Long id) {
-        seller.setId(id);
+    public ResponseEntity<?> saveSeller(@RequestBody @Validated SellerDTO sellerDTO, BindingResult bindingResult, @PathVariable Long id) {
+        sellerDTO.setId(id);
         if(bindingResult.hasErrors()){
             StringBuilder errors = new StringBuilder();
             bindingResult.getAllErrors().forEach(error -> errors.append(error.getDefaultMessage()).append("\n"));
@@ -72,7 +73,7 @@ public class SellerController {
         }
 
         try{
-            Seller updatedSeller = sellerService.updateSeller(seller); //in existing implementation it should not return null
+            Seller updatedSeller = sellerService.updateSeller(sellerDTO); //in existing implementation it should not return null
             return new ResponseEntity<>(updatedSeller,(updatedSeller == null)?HttpStatus.CONFLICT:HttpStatus.OK);
         } catch (Exception ex){
             return ResponseEntity.status(HttpStatus.CONFLICT)

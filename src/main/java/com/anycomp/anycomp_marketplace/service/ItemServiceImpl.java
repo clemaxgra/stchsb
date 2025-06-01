@@ -1,5 +1,6 @@
 package com.anycomp.anycomp_marketplace.service;
 
+import com.anycomp.anycomp_marketplace.dto.ItemDTO;
 import com.anycomp.anycomp_marketplace.model.Item;
 import com.anycomp.anycomp_marketplace.model.Seller;
 import com.anycomp.anycomp_marketplace.repository.ItemRepository;
@@ -50,61 +51,22 @@ public class ItemServiceImpl implements ItemService{
         return itemRepository.findBySellerId(sellerID);
     }
 
-    public Item saveItem(Item item, Long sellerID){
+    public Item saveItem(ItemDTO itemDTO){
 
-        Optional<Seller> optionalSeller = sellerRepository.findById(sellerID);
-    
-        if (optionalSeller.isEmpty()) {
-            throw new EntityNotFoundException("Seller with ID " + sellerID + " not found");
-        }
+        Item item = convertToEntity(itemDTO);
 
-        if((item.getId() != null) && itemRepository.findById(item.getId()).isPresent()){
-            log.info("Item with id: {} already exists", item.getId());
-            return null;
-        }
-        else{
-            Item savedItem = itemRepository.save(item);
-            log.info("Item with id: {} saved successfully", savedItem.getId());
-            return savedItem;
-        }
+        Item savedItem = itemRepository.save(item);
+        log.info("Item with id: {} saved successfully", savedItem.getId());
+        return savedItem;
+
     }
 
-    public Item updateItem(Item item) throws Exception{
+    public Item updateItem(ItemDTO itemDTO) throws Exception{
 
-        Long targetID = item.getId();
-        Optional<Item> optionalItem = itemRepository.findById(targetID);
-    
-        if (optionalItem.isEmpty()) {
-            throw new EntityNotFoundException("Item with ID " + targetID + " not found");
-        }
+        Item item = convertToEntity(itemDTO);
+        Item updatedItem = itemRepository.save(item);
 
-        Item existingItem = optionalItem.get();
-
-
-        existingItem.setName(item.getName());
-        existingItem.setDescription(item.getDescription());
-        existingItem.setPrice(item.getPrice());
-        existingItem.setQuantity(item.getQuantity());
-        //seller will not be changed
-
-        ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
-        Validator validator = factory.getValidator();
-        Set<ConstraintViolation<Item>> violations = validator.validate(existingItem);
-
-        if (!violations.isEmpty()) {
-            StringBuilder errors = new StringBuilder();
-            for (ConstraintViolation<Item> violation : violations) {
-                errors.append(violation.getMessage()).append("\n");
-            }
-            log.info("Item failed to update. {}", errors.toString());
-            throw new Exception(errors.toString());
-
-        }
-
-
-        Item updatedItem = itemRepository.save(existingItem);
-
-        log.info("Item with id: {} updated successfully", targetID);
+        log.info("Item with id: {} updated successfully", updatedItem.getId());
         return updatedItem;
 
     }
@@ -117,5 +79,33 @@ public class ItemServiceImpl implements ItemService{
         itemRepository.deleteById(id);
         log.info("Item with id: {} deleted successfully", id);
         return true;
+    }
+
+    public Item convertToEntity(ItemDTO itemDTO) throws EntityNotFoundException{
+
+        Item item = null;
+        if(itemDTO.getId() != null){
+            Optional<Item> optionalItem = itemRepository.findById(itemDTO.getId());
+            if(optionalItem.isPresent())
+                item = optionalItem.get();
+            else
+                throw new EntityNotFoundException("Item doesn't exist");
+        }
+        else{
+            item = new Item();
+            item.setId(itemDTO.getId());
+        }
+        item.setName(itemDTO.getName());
+        item.setDescription(itemDTO.getDescription());
+        item.setPrice(itemDTO.getPrice());
+        item.setQuantity(itemDTO.getQuantity());
+
+        Optional<Seller> optionalSeller = sellerRepository.findById(itemDTO.getSellerId());
+        
+        if(!optionalSeller.isPresent())
+            throw new EntityNotFoundException("Seller does not exist");
+
+        item.setSeller(optionalSeller.get());
+        return item;
     }
 }

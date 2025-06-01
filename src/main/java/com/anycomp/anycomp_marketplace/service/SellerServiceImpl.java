@@ -1,5 +1,6 @@
 package com.anycomp.anycomp_marketplace.service;
 
+import com.anycomp.anycomp_marketplace.dto.SellerDTO;
 import com.anycomp.anycomp_marketplace.model.Seller;
 import com.anycomp.anycomp_marketplace.repository.SellerRepository;
 
@@ -30,8 +31,9 @@ public class SellerServiceImpl implements SellerService{
         return null;
     }
     
-    public Seller saveSeller(Seller seller){
+    public Seller saveSeller(SellerDTO sellerDTO){
 
+        Seller seller = convertToEntity(sellerDTO);
         if((seller.getId() != null) && sellerRepository.findById(seller.getId()).isPresent()){
             log.info("Seller with id: {} already exists", seller.getId());
             return null;
@@ -43,23 +45,13 @@ public class SellerServiceImpl implements SellerService{
         }
     }
 
-    public Seller updateSeller(Seller seller){
+    public Seller updateSeller(SellerDTO sellerDTO){
 
-        Long targetID = seller.getId();
-        Optional<Seller> optionalSeller = sellerRepository.findById(targetID);
-    
-        if (optionalSeller.isEmpty()) {
-            throw new EntityNotFoundException("Seller with ID " + targetID + " not found");
-        }
-
-        Seller existingSeller = optionalSeller.get();
-
-        existingSeller.setName(seller.getName());
-        existingSeller.setEmail(seller.getEmail());
+        Seller existingSeller = convertToEntity(sellerDTO);
 
         Seller updatedSeller = sellerRepository.save(existingSeller);
 
-        log.info("Seller with id: {} updated successfully", targetID);
+        log.info("Seller with id: {} updated successfully", sellerDTO.getId());
         return updatedSeller;
 
     }
@@ -73,4 +65,24 @@ public class SellerServiceImpl implements SellerService{
         log.info("Seller with id: {} deleted successfully", id);
         return true;
     }
+
+    public Seller convertToEntity(SellerDTO sellerDTO)  throws EntityNotFoundException{
+        Seller seller = null;
+        if(sellerDTO.getId() != null){
+            Optional<Seller> optionalSeller = sellerRepository.findById(sellerDTO.getId());
+            if(optionalSeller.isPresent())
+                seller = optionalSeller.get();
+            else
+                throw new EntityNotFoundException("Seller doesn't exist");
+        }
+        else{
+            seller = new Seller();
+            seller.setId(sellerDTO.getId());
+        }
+
+        seller.setName(sellerDTO.getName());
+        seller.setEmail(sellerDTO.getEmail());
+        return seller;
+    }   
+
 }

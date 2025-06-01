@@ -1,5 +1,6 @@
 package com.anycomp.anycomp_marketplace.service;
 
+import com.anycomp.anycomp_marketplace.dto.BuyerDTO;
 import com.anycomp.anycomp_marketplace.model.Buyer;
 import com.anycomp.anycomp_marketplace.repository.BuyerRepository;
 
@@ -31,36 +32,18 @@ public class BuyerServiceImpl implements BuyerService{
         return null;
     }
     
-    public Buyer saveBuyer(Buyer buyer){
-
-        if((buyer.getId() != null) && buyerRepository.findById(buyer.getId()).isPresent()){
-            log.info("Buyer with id: {} already exists", buyer.getId());
-            return null;
-        }
-        else{
-            Buyer savedBuyer = buyerRepository.save(buyer);
-            log.info("Buyer with id: {} saved successfully", savedBuyer.getId());
-            return savedBuyer;
-        }
+    public Buyer saveBuyer(BuyerDTO buyerDTO){
+        Buyer savedBuyer = buyerRepository.save(convertToEntity(buyerDTO));
+        log.info("Buyer with id: {} saved successfully", savedBuyer.getId());
+        return savedBuyer;
     }
 
-    public Buyer updateBuyer(Buyer buyer){
+    public Buyer updateBuyer(BuyerDTO buyerDTO){
 
-        Long targetID = buyer.getId();
-        Optional<Buyer> optionalBuyer = buyerRepository.findById(targetID);
-    
-        if (optionalBuyer.isEmpty()) {
-            throw new EntityNotFoundException("Buyer with ID " + targetID + " not found");
-        }
-
-        Buyer existingBuyer = optionalBuyer.get();
-
-        existingBuyer.setName(buyer.getName());
-        existingBuyer.setEmail(buyer.getEmail());
-
+        Buyer existingBuyer = convertToEntity(buyerDTO);
         Buyer updatedBuyer = buyerRepository.save(existingBuyer);
 
-        log.info("Buyer with id: {} updated successfully", targetID);
+        log.info("Buyer with id: {} updated successfully", updatedBuyer.getId());
         return updatedBuyer;
 
     }
@@ -74,4 +57,24 @@ public class BuyerServiceImpl implements BuyerService{
         log.info("Buyer with id: {} deleted successfully", id);
         return true;
     }
+
+    public Buyer convertToEntity(BuyerDTO buyerDTO) throws EntityNotFoundException{
+
+        Buyer buyer = null;
+        if(buyerDTO.getId() != null){
+            Optional<Buyer> optionalBuyer = buyerRepository.findById(buyerDTO.getId());
+            if(optionalBuyer.isPresent())
+                buyer = optionalBuyer.get();
+            else
+                throw new EntityNotFoundException("Buyer doesn't exist");
+        }
+        else{
+            buyer = new Buyer();
+            buyer.setId(buyerDTO.getId());
+        }
+        buyer.setName(buyerDTO.getName());
+        buyer.setEmail(buyerDTO.getEmail());
+        return buyer;
+    }
+
 }
