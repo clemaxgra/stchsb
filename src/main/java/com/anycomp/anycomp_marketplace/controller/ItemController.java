@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RestController;
@@ -32,17 +33,22 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestParam;
 
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 @RestController
 @Slf4j
 public class ItemController {
     @Autowired
     private ItemService itemService;
-    @Autowired
-    private SellerService sellerService;
+
 
     @GetMapping("/items")
-    public ResponseEntity<List<Item>> getItemsList() {
-        return ResponseEntity.ok(itemService.getAllItems());
+    public ResponseEntity<Page<Item>> getItemsList(@PageableDefault(page = 0, size = 10, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
+        
+        return ResponseEntity.ok(itemService.getAllItems(pageable));
     }
 
     @GetMapping("/items/{id}")
@@ -55,9 +61,12 @@ public class ItemController {
     }
 
     @GetMapping("/sellers/{sellerId}/items")
-    public ResponseEntity<List<Item>> getItemsbySellerID(@PathVariable Long sellerId) {
-        List<Item> items = itemService.getItemsBySellerID(sellerId);
-        return new ResponseEntity<>(items, HttpStatus.FOUND);
+    public ResponseEntity<Page<Item>> getItemsbySellerID(@PathVariable Long sellerId,
+            @PageableDefault(page = 0, size = 10, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
+                
+        Page<Item> items = itemService.getItemsBySellerID(sellerId, pageable);
+        
+        return ResponseEntity.ok(items);
     }
 
     @PostMapping("/sellers/{sellerId}/items")

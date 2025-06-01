@@ -6,8 +6,11 @@ import com.anycomp.anycomp_marketplace.dto.SellerDTO;
 import com.anycomp.anycomp_marketplace.model.Seller;
 import jakarta.persistence.EntityNotFoundException;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 public interface SellerService {
-    public List<Seller> getAllSellers();
+    public Page<Seller> getAllSellers(Pageable pageable);
     public Seller getSellerByID(Long id);
     public Seller saveSeller(SellerDTO sellerDTO);
     public Seller updateSeller(SellerDTO sellerDTO);

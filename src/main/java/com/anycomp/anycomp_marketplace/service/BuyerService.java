@@ -7,8 +7,12 @@ import com.anycomp.anycomp_marketplace.model.Buyer;
 
 import jakarta.persistence.EntityNotFoundException;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
 public interface BuyerService {
-    public List<Buyer> getAllBuyers();
+    public Page<Buyer> getAllBuyers(Pageable pageable);
     public Buyer getBuyerByID(Long id);
     public Buyer saveBuyer(BuyerDTO buyerDTO);
     public Buyer updateBuyer(BuyerDTO buyerDTO);

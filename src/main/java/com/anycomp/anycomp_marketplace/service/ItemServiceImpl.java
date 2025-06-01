@@ -18,6 +18,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,10 @@ import java.util.Set;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -35,8 +40,8 @@ public class ItemServiceImpl implements ItemService{
     private final ItemRepository itemRepository;
     private final SellerRepository sellerRepository;
 
-    public List<Item> getAllItems(){
-        return itemRepository.findAll();
+    public Page<Item> getAllItems(Pageable pageable){
+        return itemRepository.findAll(pageable);
     }
 
     public Item getItemByID(Long id){
@@ -47,8 +52,8 @@ public class ItemServiceImpl implements ItemService{
         return null;
     }
 
-    public List<Item> getItemsBySellerID(Long sellerID){
-        return itemRepository.findBySellerId(sellerID);
+    public Page<Item> getItemsBySellerID(Long sellerID, Pageable pageable){
+        return itemRepository.findBySellerId(sellerID, pageable);
     }
 
     public Item saveItem(ItemDTO itemDTO){

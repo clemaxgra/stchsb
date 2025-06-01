@@ -14,14 +14,19 @@ import java.util.Optional;
 import java.time.LocalDateTime;
 import java.util.List;
 
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class BuyerServiceImpl implements BuyerService{
     private final BuyerRepository buyerRepository;
 
-    public List<Buyer> getAllBuyers(){
-        return buyerRepository.findAll();
+    public Page<Buyer> getAllBuyers(Pageable pageable){
+        return buyerRepository.findAll(pageable);
     }
 
     public Buyer getBuyerByID(Long id){

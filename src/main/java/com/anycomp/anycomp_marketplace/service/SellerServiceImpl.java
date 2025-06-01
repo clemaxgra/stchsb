@@ -13,14 +13,19 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.Optional;
 import java.util.List;
 
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class SellerServiceImpl implements SellerService{
     private final SellerRepository sellerRepository;
 
-    public List<Seller> getAllSellers(){
-        return sellerRepository.findAll();
+    public Page<Seller> getAllSellers(Pageable pageable){
+        return sellerRepository.findAll(pageable);
     }
 
     public Seller getSellerByID(Long id){
